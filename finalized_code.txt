@@ -1,0 +1,213 @@
+
+#include "stdafx.h"
+#include<glut.h>
+#include<math.h>
+#include<string.h>
+#define max 5
+#define screenmax 200
+#define bigO(n) n*(n+1)/2 
+GLfloat ini[max] = { 8, 9, 3, 5, 1 };
+GLfloat mat[bigO(max)][max];
+int changes[bigO(max)];
+GLfloat  sum = 0, difference, temp1;
+int count = 0, n = 5, stage = 0;
+bool first = true,start=true;
+
+typedef struct circle
+{
+	GLfloat x, y, r;
+}circle;
+
+circle cc[max];
+//#declare DarkTurquoise = color red 0.439216 green 0.576471 blue 0.858824
+
+void init(void)
+{
+	glClearColor( 0 ,   0 ,0 , 0);
+	glMatrixMode(GL_PROJECTION);
+}
+
+void copy(int j)//pass matrix
+{
+	for (int k = 0; k < max; k++)
+	mat[count][k] = ini[k];//takes care of the elements that are swapped in every stage(pass)
+	count++;
+	changes[count - 1] = j;// stores the position of the swapped elements
+}
+void bubbleSort()
+{
+	int i, j;
+	copy(-999);
+	for (i = 0; i < n - 1; i++)
+		for (j = 0; j < n - i - 1; j++)
+			if (ini[j] > ini[j + 1])
+			{
+				temp1 = ini[j];
+				ini[j] = ini[j + 1];
+				ini[j + 1] = temp1;
+				copy(j);
+			}
+}
+void print_result() 
+{
+	printf("\nbubble sort result");
+	for (int i = 0; i < count; i++)
+	{
+		printf("\n");
+		for (int j = 0; j < n; j++)
+			printf("%f ", (float)mat[i][j]);
+	}
+	printf("\nswaped positions");
+	for (int i = 0; i < count; i++)
+		printf("%d ", changes[i]);
+	printf("\n");
+	printf("sum=%f  ", sum * 2);
+	printf("dif=%f", difference);
+}
+void initial_c()
+{
+	if (first){
+		bubbleSort();
+		for (int i = 0; i < max; i++)
+			sum = sum + ini[i];
+		difference = (screenmax - sum * 4 - 10) / 5;//rad=rad*2  dia=rad*4 for 5 circles
+		print_result();//on console
+		first = false;
+	}
+	printf("\nposition and radius of each circles");
+	
+	//to display the sorted array
+	for (int i = 0; i<max; i++)
+	{
+		cc[i].r = mat[stage][i] * 2;
+		cc[i].y = 100;
+		if (i != 0)
+			cc[i].x = cc[i - 1].x + cc[i - 1].r + cc[i].r + difference;
+		else
+			cc[i].x = cc[i].r + 10;
+		printf("\ncircle%d x=%f y=%f radius=%f", i, cc[i].x, cc[i].y, cc[i].r / 2);
+	}
+	printf("\n%d /%d passes", stage, count-1);
+
+}
+void display_text(float x, float y, float z, char *text)
+{
+	glRasterPos3f(x, y, z);
+	for (char *i = text; *i != '\0'; i++)
+	{
+		glColor3f(0.0, 0.0, 1.0);
+		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *i);
+	}
+
+}
+void draw(circle c, int inde)
+{
+	float i;
+	glBegin(GL_TRIANGLE_FAN);
+	if (changes[stage] == inde)
+		glColor3f(1.0, 0.0, 0.0);//to print swapped elements
+	else if (changes[stage] + 1 == inde)
+		glColor3f(1.0, 1.0, 0.0);//swapped element
+	else
+		glColor3f(0.0, 1.0, 0.0);
+	glVertex2f(c.x, c.y);
+	for (i = 0; i<360; i++)
+		glVertex2f(c.x + sin(i)*c.r, c.y + cos(i)*c.r);
+
+	glEnd();
+	glutSwapBuffers();
+}
+void frontscreen()
+{
+	glClear(GL_COLOR_BUFFER_BIT);
+	glColor3f(0, 0, 1);
+	display_text(56.0, 190.0, 0.0, "RAJARAJESHWARI COLLEGE OF ENGINEERING ");
+	glColor3f(0.7, 0, 1);
+	display_text(40.0, 175.0, 0.0, "DEPARTMENT OF COMPUTER SCIENCE \nAND \nENGINEERING");
+	glColor3f(1, 0.5, 0);
+	display_text(90.0, 160.0, 0.0, "A MINI PROJECT ON");
+	glColor3f(1, 0, 0);
+	display_text(75.0, 145.0, 0.0, "BUBBLE SORT ALGORITHM");
+	glColor3f(1, 0.5, 0);
+	display_text(00.0, 110.0, 0.0, "BY:");
+	glColor3f(0.5, 0, 0.5);
+	display_text(0.0, 95.0, 0.0, "SITHARA NS		(1RR15CS106)");
+	display_text(0.0, 80.0, 0.0, "SHRAVAN KUMAR B   (1RR15CS104)");
+	glColor3f(1, 0.5, 0);
+	display_text(100.0, 50.0, 0.0, "PRESS ENTER TO START");
+	glFlush();
+}
+void display()
+{
+	if (start)
+		frontscreen();
+	else
+	{
+		glClear(GL_COLOR_BUFFER_BIT);
+		display_text(56.0, 190.0, 0.0, "Bubble Sort Visualizer");
+		//display_text(56.0, 170.0, 0.0, "PRESS 'N'/'n' ");
+		if (stage==0)
+			display_text(56.0, 150.0, 0.0, "PRESS 'N'/'n' to start sorting");
+		else if (stage<count-1)
+			display_text(56.0, 150.0, 0.0, "PRESS 'N'/'n' Sorting in process");
+		else
+			display_text(56.0, 130.0, 0.0, "Sorting Process Completed.........press q to quit");
+		initial_c();
+		for (int i = 0; i < max; i++)
+		{
+			draw(cc[i], i);
+			char t[5];
+			sprintf_s(t, "%d", (int)(float)cc[i].r);
+			glColor3f(1.0, 1.0, 1.0);
+			display_text(cc[i].x, cc[i].y-25, 0.0, t);
+		}
+		glFlush();
+	}
+}
+void myReshape(int w, int h)
+{
+	glViewport(0, 0, w, h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	if (w <= h){
+		gluOrtho2D(0, screenmax, 0 * (GLfloat)h / (GLfloat)w, (GLfloat)screenmax * (GLfloat)h / (GLfloat)w);
+		//	printf("\n%f %f %f %f here", 0, (200.0), 0 * (GLfloat)h / (GLfloat)w, (GLfloat)screenmax * (GLfloat)h / (GLfloat)w);
+	}
+	else
+	{
+		gluOrtho2D(0 * (GLfloat)w / (GLfloat)h, (GLfloat)screenmax * (GLfloat)w / (GLfloat)h, 0, (GLfloat)screenmax);
+		//printf("\n%f %f %f %f", 0 * w / h,(GLfloat)w, 0, (float)screenmax);
+	}
+	glMatrixMode(GL_MODELVIEW);
+}
+void key(unsigned char key, int x, int y)
+{
+	if (key == 13 && start)
+	{
+			start=false;
+			display();
+	}
+	else if (key == 'n' || key == 'N')
+	{
+		if (stage<count - 1)
+			stage++;
+		display();
+	}
+	else if (key == 'q'|| key == 'Q')
+	exit(0);
+}
+
+void main(int argc, char **argv)
+{
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+	glutInitWindowPosition(50, 50);
+	glutInitWindowSize(900, 800);
+	glutCreateWindow("COMPUTER GRAPHICS MINI PROJECT");
+	init();
+	glutReshapeFunc(myReshape);
+	glutDisplayFunc(display);
+	glutKeyboardFunc(key);
+	//glEnable(GL_LIGHTING);
+	glutMainLoop();
+}
